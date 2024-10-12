@@ -17,14 +17,14 @@ export default defineNuxtConfig({
     config: {
       brand: {
         primary: '#ef3025',
-        secondary: '#eaebed',
+        secondary: '#7b8ba9',
       },
     },
   },
   app: {
     head: {
       link: [
-        { rel: 'icon', href: '/rzd_icon.png' },
+        { rel: 'icon', href: '/img/Russian_Railways_Logo.svg.png' },
       ],
       title: 'Поддержка сотрудников РЖД'
     },

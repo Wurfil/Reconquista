@@ -1,5 +1,5 @@
 <template>
-  <div class="tw-text-xl tw-h-[100px] tw-py-5 tw-fixed tw-bg-white tw-w-[900px] tw-top-16 tw-z-10">
+  <div class="tw-text-xl tw-h-[100px] tw-w-full tw-max-w-[900px] tw-py-5 tw-fixed tw-bg-white tw-left-0 tablet:tw-left-auto tw-top-16 tw-z-10">
     <h1 class="tw-text-primary tw-text-center tw-text-2xl tw-mt-3 header-name">
       <span class="tw-bg-[#ef3025] tw-text-white  tw-p-1"> ЧАТ ПОДДЕРЖКИ</span> СОТРУДНИКОВ РЖД
     </h1>
@@ -18,13 +18,13 @@
     >
       <q-chat-message
           v-if="chat.type === 'ai'"
-          class="tw-text-base tw-pr-28 before:tw-content-none "
+          class="tw-text-base tw-pr-0 laptop:tw-pr-28 before:tw-content-none "
           bg-color="white"
           text-color="black"
       >
         <template v-slot:name>
           <p class="tw-text-sm tw-opacity-50 tw-mb-2">
-            Ассистент
+            Бот
           </p>
         </template>
         <template v-slot:avatar>
@@ -34,14 +34,24 @@
           >
         </template>
         <template #stamp>{{ chat.date ? format(new Date(chat.date), 'HH:mm') : '' }}</template>
-        <p class="tw-p-1"
-           v-html="chat.content.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')"/>
+        <div>
+          <p class="tw-p-1"
+             v-html="chat.content.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')"/>
+          <q-btn v-if="chat.fullAnswer !== 'Я не знаю.' && !!chat.fullAnswer" dense flat color="primary" no-caps
+                 @click="openAdditional(chat)">Подробнее
+          </q-btn>
+          <modal-additional-model
+              :open="openAdditionalModel"
+              :text="chat.fullAnswer"
+              :question="chat.question"
+          />
+        </div>
 
       </q-chat-message>
 
       <q-chat-message
           v-else
-          class="tw-text-base tw-pl-40 before:tw-content-none"
+          class="tw-text-base tw-ml-16 tablet:tw-pl-40 before:tw-content-none"
           bg-color="primary"
           text-color="white"
           sent
@@ -82,23 +92,26 @@
       </div>
     </q-chat-message>
   </div>
-  <div class="tw-text-xl tw-h-[100px] tw-py-5 tw-bg-white tw-fixed tw-w-[900px] tw-bottom-0">
+  <div class="tw-text-xl tw-w-full tw-max-w-[900px] tw-w-10vw tw-h-[100px] tw-fixed tw-py-5 tablet:tw-left-auto tw-left-0 tw-bottom-0">
     <q-input
         :disable="loadingMessage"
         @keydown.enter="sendMessage"
-        class="tw-bg-white tw-text-lg tw-z-10"
+        class="tw-bg-white tw-text-lg tw-z-10 tablet:tw-px-0 tw-px-2"
         rounded
         outlined
         v-model="question"
-        label="Спросите у ассистента">
+        label="Введите свой вопрос">
       <template #append>
-        <q-icon
+        <q-btn
             class="hover:tw-cursor-pointer"
             color="primary"
             size="md"
+            rounded
             @click="sendMessage"
             :name="mdiArrowRightBoldCircle"
-        />
+        >
+          Отправить
+        </q-btn>
       </template>
     </q-input>
   </div>
@@ -128,6 +141,26 @@ const isNewChatID = ref(false);
 //     }
 //   }
 // });
+const openAdditionalModel = ref(false)
+
+const choosedProfile = useState('choosedProfile')
+
+watch(() => choosedProfile.value, () => {
+  if (chatTree.value.length <= 1 ){
+    chatTree.value[0] = {
+      type: 'ai',
+      question: '',
+      content: `Здравтствуйте, ${choosedProfile.value.name.split(' ').slice(0,2).join(' ')}. Чем я могу помочь Вам?`,
+      fullAnswer: '',
+      date: new Date(),
+    }
+  }
+}, {deep: true})
+
+function openAdditional(chat) {
+  openAdditionalModel.value = !openAdditionalModel.value
+
+}
 
 async function sendMessage() {
   if (!loadingMessage.value) {
@@ -169,13 +202,15 @@ async function sendMessage() {
       });
       isNewChatID.value = false;
       console.log(response)
-     // const reader = response.body.getReader();
+      // const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       loadingMessage.value = false;
 
       const responseMessage = {
         type: 'ai',
-        content: response.answer,
+        question: questionRequestTemp,
+        content: response.small_answer,
+        fullAnswer: response.answer,
         date: new Date(),
       };
       chatTree.value.push(responseMessage);
@@ -200,9 +235,9 @@ async function sendMessage() {
       //     }
       //   }
 
-        // if (result.done) return;
-        //
-        // return reader.read().then(processResult);
+      // if (result.done) return;
+      //
+      // return reader.read().then(processResult);
       // });
       chatHistory.push(chatTree.value.at(-1));
     } catch (error) {
@@ -212,13 +247,17 @@ async function sendMessage() {
 }
 </script>
 <style>
-.header-name{
+.header-name {
   font-family: RussianRail;
 }
+
 .q-message-text:last-child:before {
   display: none;
 }
-
+.q-input {
+  width: 100%;
+  box-sizing: border-box;
+}
 .q-message-text--received {
   border-radius: 15px;
   border: solid #ef3025 1px;
