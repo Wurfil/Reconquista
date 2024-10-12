@@ -1,0 +1,238 @@
+<template>
+  <div class="tw-text-xl tw-h-[100px] tw-py-5 tw-fixed tw-bg-gradient-to-b tw-to-transparent tw-via-white tw-from-white tw-w-[900px] tw-top-16 tw-z-10">
+    <h1 class="tw-text-primary tw-text-center tw-text-2xl tw-mt-3 header-name">
+      <span class="tw-bg-[#ef3025] tw-text-white  tw-p-1"> ЧАТ ПОДДЕРЖКИ</span> СОТРУДНИКОВ РЖД
+    </h1>
+  </div>
+  <div class="tw-my-20">
+    <div v-if="loadingChat" class="tw-flex tw-justify-center">
+      <q-spinner size="36"/>
+    </div>
+    <!--        <div v-else-if="!chatTree.length">-->
+    <!--          <choose-ticket />-->
+    <!--        </div>-->
+    <div
+        v-for="chat in chatTree"
+        :key="chat"
+
+    >
+      <q-chat-message
+          v-if="chat.type === 'ai'"
+          class="tw-text-base tw-pr-28 before:tw-content-none "
+          bg-color="white"
+          text-color="black"
+      >
+        <template v-slot:name>
+          <p class="tw-text-sm tw-opacity-50 tw-mb-2">
+            Ассистент
+          </p>
+        </template>
+        <template v-slot:avatar>
+          <img
+              class="q-message-avatar q-message-avatar--sent tw-mr-4"
+              src="~/public/rzd_icon.png"
+          >
+        </template>
+        <template #stamp>{{ chat.date ? format(new Date(chat.date), 'HH:mm') : '' }}</template>
+        <p class="tw-p-1"
+           v-html="chat.content.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')"/>
+
+      </q-chat-message>
+
+      <q-chat-message
+          v-else
+          class="tw-text-base tw-pl-40 before:tw-content-none"
+          bg-color="primary"
+          text-color="white"
+          sent
+      >
+        <template v-slot:name>
+          <p class="tw-text-sm tw-opacity-50 tw-mb-2">
+            Вы
+          </p>
+        </template>
+        <template v-slot:avatar/>
+        <template #stamp>{{ chat.date ? format(new Date(chat.date), 'HH:mm') : '' }}</template>
+
+        <p class="tw-p-1">
+          {{ chat.content }}
+        </p>
+      </q-chat-message>
+    </div>
+    <q-chat-message
+        v-if="loadingMessage"
+        class="tw-text-base tw-border-primary"
+        bg-color="white"
+        style="border: none"
+        text-color="gray"
+    >
+      <template v-slot:name>
+        <strong class="tw-text-sm tw-font-normal tw-opacity-50 tw-mb-2">
+          Рина
+        </strong>
+      </template>
+      <template v-slot:avatar style="border: none">
+        <img
+            class="q-message-avatar q-message-avatar--sent tw-mr-4"
+            src="~/assets/2d8f34884f7e83fac400bc4758243c45.jpg"
+        >
+      </template>
+      <div class="tw-py-1">
+        <q-spinner-dots size="2rem"/>
+      </div>
+    </q-chat-message>
+  </div>
+  <div class="tw-text-xl tw-h-[100px] tw-py-5 tw-bg-white tw-fixed tw-w-[900px] tw-bottom-0">
+    <q-input
+        :disable="loadingMessage"
+        @keydown.enter="sendMessage"
+        class="tw-bg-white tw-text-lg tw-z-10"
+        rounded
+        outlined
+        v-model="question"
+        label="Спросите у ассистента">
+      <template #append>
+        <q-icon
+            class="hover:tw-cursor-pointer"
+            color="primary"
+            size="md"
+            @click="sendMessage"
+            :name="mdiArrowRightBoldCircle"
+        />
+      </template>
+    </q-input>
+  </div>
+</template>
+
+<script setup>
+import {mdiArrowRightBoldCircle} from '@mdi/js';
+import {format} from 'date-fns';
+import {getChat} from '~/shared/api/index.js';
+
+const chatTree = ref([]);
+const question = ref('');
+const loadingMessage = ref(false);
+const loadingChat = ref(false);
+
+const chatHistory = [];
+const chatID = useState('chatID', () => null);
+const isNewChatID = ref(false);
+// watch(() => chatID.value, async () => {
+//   if (!isNewChatID.value) {
+//     if (chatID.value) {
+//       loadingChat.value = true;
+//       chatTree.value = await getChat(chatID.value);
+//       loadingChat.value = false;
+//     } else {
+//       chatTree.value = [];
+//     }
+//   }
+// });
+
+async function sendMessage() {
+  if (!loadingMessage.value) {
+    try {
+      const message = {
+        type: 'human',
+        content: `${question.value}`,
+        date: new Date(),
+      };
+      const questionRequestTemp = question.value;
+      question.value = '';
+
+      chatTree.value.push(message);
+      setTimeout(() => {
+        window.scrollTo(0, document.body.scrollHeight);
+      }, 100);
+      loadingMessage.value = true;
+      if (!chatID.value) {
+        isNewChatID.value = true;
+        chatID.value = Date.now();
+        useState('chats').value = [{
+          conversation_id: chatID.value,
+          data: {
+            data: {
+              content: message.content,
+            },
+          },
+        }//, ...useState('chats').value
+        ];
+      }
+      const response = await $fetch('http://10.0.24.117:8080/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          question: questionRequestTemp,
+        },
+      });
+      isNewChatID.value = false;
+      console.log(response)
+     // const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      loadingMessage.value = false;
+
+      const responseMessage = {
+        type: 'ai',
+        content: response.answer,
+        date: new Date(),
+      };
+      chatTree.value.push(responseMessage);
+      chatHistory.push(message);
+
+      // reader.read().then(function processResult(result) {
+      //   let token = decoder.decode(result.value);
+      //   console.log(token.split('event: data\r\n')[1]);
+      //   if (token.split('event: data\r\n')[1]) {
+      //     try {
+      //       token = JSON.parse(token.split('event: data\r\ndata: ')[1]);
+      //       console.log(token);
+      //       if (token.context) {
+      //         console.log(token.context);
+      //       }
+      //       if (token?.output) {
+      //         chatTree.value.at(-1).content += token.output;
+      //         window.scrollTo(0, document.body.scrollHeight);
+      //       }
+      //     } catch (e) {
+      //       console.error(e);
+      //     }
+      //   }
+
+        // if (result.done) return;
+        //
+        // return reader.read().then(processResult);
+      // });
+      chatHistory.push(chatTree.value.at(-1));
+    } catch (error) {
+      alert(`Join the waiting list if you want to use models: ${error}`);
+    }
+  }
+}
+</script>
+<style>
+.header-name{
+  font-family: RussianRail;
+}
+.q-message-text:last-child:before {
+  display: none;
+}
+
+.q-message-text--received {
+  border-radius: 15px;
+  border: solid #ef3025 1px;
+}
+
+.q-message-text--sent {
+  border-radius: 15px;
+}
+
+textarea {
+  resize: none;
+}
+
+textarea:focus {
+  outline: none;
+}
+</style>
