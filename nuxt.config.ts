@@ -11,6 +11,7 @@ export default defineNuxtConfig({
   quasar: {
     plugins: [
       'Notify',
+      'Loading',
     ],
     lang: 'ru',
 
@@ -26,7 +27,7 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', href: '/rzd_icon.png' },
       ],
-      title: 'Поддержка сотрудников РЖД'
+      title: 'Поддержка сотрудников РЖД',
     },
   },
   css: ['@/public/style/main.css', '@/public/style/font.css'],

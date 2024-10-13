@@ -1,4 +1,0 @@
-<template>
-  <base-view/>
-</template>
-

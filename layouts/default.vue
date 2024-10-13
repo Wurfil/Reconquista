@@ -51,7 +51,7 @@
             </q-item>
             <q-separator />
           </template>
-          <q-item clickable>
+          <q-item clickable @click="isAddNewDocument = !isAddNewDocument">
             <q-item-section>
               + Добавить документ
             </q-item-section>
@@ -121,15 +121,23 @@
               </q-item-section>
             </q-card>
           </template>
-
+          <q-item-section>
+            <q-btn color="primary" @click="isAddNewUser = !isAddNewUser">
+              + Добавить пользователя
+            </q-btn>
+          </q-item-section>
         </div>
       </q-scroll-area>
     </q-drawer>
+    <modal-new-base :open-out="isAddNewDocument" @create="createDocument" />
+    <modal-new-profile :open-out="isAddNewUser" @create="createProfile" />
   </q-layout>
 </template>
 <script setup>
 import { getDocuments } from '~/components/api-service/index.js';
 
+const isAddNewUser = ref(false);
+const isAddNewDocument = ref(false);
 const layout = true;
 const drawerMobileMenu = ref(false);
 const choosedProfile = useState('choosedProfile', () => ({
@@ -138,7 +146,7 @@ const choosedProfile = useState('choosedProfile', () => ({
   experience: '',
   enterprise: '',
 }));
-const chatHistory = useState('chatHistory');
+const chatHistory = useState('chatHistory', () => []);
 const chatTree = useState('chatTree');
 const documents = useState('documents', () => []);
 
@@ -162,7 +170,7 @@ const menuList = [
   },
 
 ];
-const profiles = [
+const profiles = ref([
   {
     name: 'Александр Михайлович Алексеев',
     characteristic: 'Инвалид 2 группы',
@@ -181,7 +189,16 @@ const profiles = [
     experience: '3 года',
     enterprise: 'B',
   },
-];
+]);
+
+function createProfile({ name, characteristic, experience, enterprise }) {
+  profiles.value.push({
+    name,
+    characteristic,
+    experience,
+    enterprise,
+  });
+}
 const idChat = useState('idChat', () => null);
 
 function saveChat(oldChatTree) {
@@ -210,6 +227,15 @@ function newChat() {
 
   };
 }
+
+function createDocument({ id, name, branch }) {
+  documents.value.push({
+    title: name,
+    id,
+    branch,
+    checked: false,
+  });
+}
 function selectDocument(item) {
   item.checked = !item.checked;
   isDefaultBranch.value = false;
@@ -236,6 +262,7 @@ function chooseProfile(profile) {
   checkDocument(profile);
 }
 function checkDocument(profile) {
+  console.log(profile);
   documents.value.forEach((el) => {
     if (el.branch === profile.enterprise) {
       el.checked = true;

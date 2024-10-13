@@ -79,13 +79,13 @@
     >
       <template v-slot:name>
         <strong class="tw-text-sm tw-font-normal tw-opacity-50 tw-mb-2">
-          Рина
+          Бот
         </strong>
       </template>
       <template v-slot:avatar style="border: none">
         <img
           class="q-message-avatar q-message-avatar--sent tw-mr-4"
-          src="~/assets/2d8f34884f7e83fac400bc4758243c45.jpg"
+          src="~/public/rzd_icon.png"
         >
       </template>
       <div class="tw-py-1">
@@ -116,7 +116,7 @@
       </template>
     </q-input>
     <modal-additional-model
-      :open="isOpenAdditionalModel"
+      :open-out="isOpenAdditionalModel"
       :text="openAdditionalModal.fullAnswer"
       :docs="openAdditionalModal.docs"
       :question="openAdditionalModal.question"
@@ -127,7 +127,6 @@
 <script setup>
 import { mdiArrowRightBoldCircle } from '@mdi/js';
 import { format } from 'date-fns';
-import { getChat } from '~/shared/api/index.js';
 
 const openAdditionalModal = ref({
   fullAnswer: '',
@@ -139,9 +138,6 @@ const question = ref('');
 const loadingMessage = ref(false);
 const loadingChat = ref(false);
 
-const chatHistory = useState('chatHistory', () => []);
-const chatID = useState('chatID', () => null);
-const isNewChatID = ref(false);
 // watch(() => chatID.value, async () => {
 //   if (!isNewChatID.value) {
 //     if (chatID.value) {
@@ -249,6 +245,12 @@ async function sendMessage() {
       } else {
         bodyResponse.docs_ids = choosedDocuments.value.filter((el) => el.checked).map((el) => el.id);
       }
+
+      if (choosedProfile.value.name) {
+        bodyResponse.user_profile = `Имя ${choosedProfile.value.name}.\
+        \n Стаж ${choosedProfile.value.experience}.\
+        \n Дополнительные данные: ${choosedProfile.value.characteristic}`;
+      }
       console.log(bodyResponse);
       // const response = await $fetch('http://10.0.24.117:8080/predict', {
       //   method: 'POST',
@@ -325,7 +327,6 @@ async function sendMessage() {
 }`);
       const documents = transformData(response.docs);
 
-      isNewChatID.value = false;
       // const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       loadingMessage.value = false;
