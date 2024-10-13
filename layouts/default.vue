@@ -17,7 +17,7 @@
             {{ menuItem.label }}
           </div>
         </div>
-        <div class="tablet:tw-hidden tw-flex">
+        <div class="tw-hidden">
           <q-btn color="dark" flat @click="drawerMobileMenu = !drawerMobileMenu" round dense icon="menu" />
         </div>
       </q-toolbar>
