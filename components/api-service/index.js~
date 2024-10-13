@@ -32,8 +32,8 @@ export async function createDocument({ title, branch, file }) {
     body: formData,
   });
   console.log(error);
-  if (error) {
-    throw error;
+  if (error.value) {
+    throw error.value;
   }
   return data;
 }
