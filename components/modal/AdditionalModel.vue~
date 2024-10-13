@@ -22,11 +22,7 @@
                 :key="section_number"
                 :label="`Пункт ${section_number.section_number}`"
             >
-              <q-card>
-                <q-card-section>
-                  {{section_number.content}}
-                </q-card-section>
-              </q-card>
+              <div>{{section_number.content}}</div>
             </q-expansion-item>
             <q-separator/>
 

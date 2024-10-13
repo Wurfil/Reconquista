@@ -32,7 +32,7 @@ export default defineNuxtConfig({
   css: ['@/public/style/main.css', '@/public/style/font.css'],
   runtimeConfig: {
     public: {
-      baseURL: 'http://10.0.24.81:8080',
+      baseURL: process.env.NUXT_API_URL,
       headers: {},
     },
   },

@@ -245,7 +245,7 @@ async function sendMessage() {
       const isDefaultBranch = useState('isDefaultBranch');
       const choosedDocuments = useState('documents');
       if (isDefaultBranch.value) {
-        bodyResponse.branch = choosedProfile.value.enterprise || 'ALL';
+        bodyResponse.branch = choosedProfile.value.enterprise;
       } else {
         bodyResponse.docs_ids = choosedDocuments.value.filter((el) => el.checked).map((el) => el.id);
       }
@@ -326,6 +326,7 @@ async function sendMessage() {
       const documents = transformData(response.docs);
 
       isNewChatID.value = false;
+      console.log(transformData(response.docs));
       // const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       loadingMessage.value = false;
