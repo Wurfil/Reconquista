@@ -258,7 +258,7 @@ async function sendMessage() {
         },
         body: bodyResponse,
       });
-      const response = data.value;
+      const response = data.value
       const documents = transformData(response.docs);
 
       // const reader = response.body.getReader();
